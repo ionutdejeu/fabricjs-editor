@@ -1,5 +1,11 @@
 import logo from './logo.svg';
 import './App.css';
+import EditorComponent from './components/EditorComponent';
+import {InputComponent} from './components/InputComponent';
+import RefComponent from './components/RefComponent';
+import EffectComponent from './components/EffectComponent';
+import LoadingInputComponent from './components/LoadingInputComponent';
+import ContextComponent from './components/ContextComponent';
 
 function App() {
   return (
@@ -18,6 +24,12 @@ function App() {
           Learn React
         </a>
       </header>
+      <EditorComponent/>
+      <InputComponent/>
+      <RefComponent imageAltIdle="Idle" imageAltHover="hover"/>
+      <EffectComponent/>
+      <LoadingInputComponent/>
+      <ContextComponent/>
     </div>
   );
 }
