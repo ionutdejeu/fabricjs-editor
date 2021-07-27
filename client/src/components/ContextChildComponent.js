@@ -1,13 +1,12 @@
 import React, { useContext } from 'react';
 import { ContextTest } from './ContextComponent';
-
+import {store} from './StateProvider'
 function ContextChildComponent(props) {
-    const context = useContext(ContextTest)
+    const [state,dispatch] = useContext(store)
     return (
         <div>
             <button onClick={(e)=>{
-                console.log(context)
-                context.testGlobalVal = 1;
+                dispatch({action:'ACION1',payload:{adaw:1}})
             }}>
 
             </button>
