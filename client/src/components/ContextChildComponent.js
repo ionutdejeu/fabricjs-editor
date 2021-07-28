@@ -1,22 +1,31 @@
-import React, { useContext } from 'react';
-import { ContextTest } from './ContextComponent';
-import {store} from './StateProvider'
-function ContextChildComponent(props) {
-    console.log(store)
-    const [state,dispatch] = React.useContext(store)
-    return (
-        <div>
-            <button onClick={(e)=>{
-                console.log(e)
-                dispatch({type:'ADD',payload:{key:Date.now(),otherProperries:Date.now().toString()}})}
-            }>Add +</button>
-            <div>
-                <ol>
-                    {state.elements && state.elements.map((elem) => <li>{JSON.stringify(elem)}</li>)}
-                </ol>
-            </div>
-        </div>
-    );
+import React, {useState, useContext} from 'react';
+import {GlobalContext} from './StateProvider';
+ 
+export const ContextChildComponent = () => {
+   const [text, updateText] = useState('');
+   const { addItemToList } = useContext(GlobalContext);
+ 
+   const handleSubmit = (event) => {
+       if (text.length){
+           event.preventDefault();
+           addItemToList(text);
+           updateText('')
+       }
+   }
+ 
+   const handleChange = (event) => {
+       updateText(event.target.value)
+   }
+ 
+   return (
+     <div> 
+         <h3>Add a new item to the shopping list</h3> 
+         <form onSubmit = {handleSubmit}> 
+            <div className = 'form-control'> 
+               <input type="text" value={text} onChange={handleChange} placeholder="Enter item..." /> 
+            </div> 
+            <button className = 'btn'>Add Item</button> 
+         </form> 
+      </div>
+   )
 }
-
-export default ContextChildComponent;

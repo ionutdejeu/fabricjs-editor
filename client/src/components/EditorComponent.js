@@ -1,54 +1,22 @@
-import React, { Component } from 'react';
+import React, {useEffect, useState}from 'react';
+import {fabric} from 'fabric'
 
-class EditorComponent extends Component {
-    
-    constructor(props) {
-        super(props);
-        
-    }
+let fabricEditor = {}
 
-    componentWillMount() {
+function EditorComponent(props) {
 
-    }
-
-    componentDidMount() {
-
-    }
-
-    componentWillReceiveProps(nextProps) {
-
-    }
-
-    shouldComponentUpdate(nextProps, nextState) {
-
-    }
-
-    componentWillUpdate(nextProps, nextState) {
-
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-
-    }
-
-    componentWillUnmount() {
-
-    }
-
-    render() {
-        return (
-            <div>
-                test component
-                <canvas id="myCanvas">
-                    Your browser does not support the canvas tag.
-                </canvas>
-            </div>
-        );
-    }
+    useEffect(()=>{
+        fabricEditor = new fabric.Canvas('canvas_editor');
+        console.log(fabricEditor)
+        return ()=>{
+            console.log("In useEffect cleanup")
+        }
+    },)
+    return (
+        <div>
+            <canvas id="canvas_editor" width="800" height="600"></canvas>
+        </div>
+    );
 }
-
-EditorComponent.propTypes = {
-
-};
 
 export default EditorComponent;

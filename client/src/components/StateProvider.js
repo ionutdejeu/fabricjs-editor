@@ -1,26 +1,33 @@
-import React, { useReducer } from 'react';
+import React, { createContext, useReducer } from 'react';
+import AppReducer from './AppReducer';
 
-const intialState= {
-    elements:[]
+const initialState = {
+   shoppingList : []
 }
 
-export const store = React.createContext()
-const {Provider} = store
+export const GlobalContext = createContext(initialState);
 
-export const StateProvider = ({children})=>{
-    const [state, dispatch] = useReducer((state,action)=>{
-        const currentState = {...state}
-        switch(action.type){
-            case 'ADD':
-                currentState.elements.push(action.payload)
-            default:
-                
-        }
-        console.log(action,currentState)
-        return currentState;
-    },intialState)
-    return <Provider value={{state,dispatch}}>{children}</Provider>;
-}; 
+export const GlobalProvider = ({ children }) => {
+   const [state, dispatch] = useReducer(AppReducer, initialState);
 
- 
- 
+   // Actions for changing state
+
+   function addItemToList(item) {
+       dispatch({
+           type: 'ADD_ITEM',
+           payload: item
+       });
+   }
+   function removeItemFromList(item) {
+       dispatch({
+           type: 'REMOVE_ITEM',
+           payload: item
+       });
+   }
+
+   return(
+      <GlobalContext.Provider value = {{shoppingList : state.shoppingList, addItemToList, removeItemFromList}}> 
+        {children} 
+   </GlobalContext.Provider>
+   )
+}
