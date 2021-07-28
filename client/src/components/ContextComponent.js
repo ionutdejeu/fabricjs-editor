@@ -1,18 +1,17 @@
-import React from 'react';
+import React,{useContext} from 'react';
 import ContextChildComponent from './ContextChildComponent';
-import {StateProvider} from './StateProvider'
+import {StateProvider,store} from './StateProvider'
  
 function ContextComponent(props) {
-   
+
+    
 
     return (
         <StateProvider>
             <div>
                 <ContextChildComponent/>
-                <ContextChildComponent/>
-                <ContextChildComponent/>
-                <ContextChildComponent/>
             </div>
+            
         </StateProvider>
         
     );
