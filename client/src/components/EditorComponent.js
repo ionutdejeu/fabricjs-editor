@@ -46,4 +46,4 @@ function EditorComponent(props) {
         </div>
     );
 }
-export default EditorComponent
+export default EditorComponent;
