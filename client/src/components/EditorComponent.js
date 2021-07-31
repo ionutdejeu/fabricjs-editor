@@ -1,5 +1,6 @@
 import React, {useEffect, useState}from 'react';
 import {fabric} from 'fabric'
+import M from 'materialize-css'
 let fabricEditor = {}
 function EditorComponent(props) {
     const add_square = ()=>{
@@ -27,21 +28,31 @@ function EditorComponent(props) {
     useEffect(()=>{
         fabricEditor = new fabric.Canvas('canvas_editor');
         console.log(fabricEditor)
+        var elems = document.querySelectorAll('.sidenav');
+        const options = {}
+        var instances = M.Sidenav.init(elems, options);
         return ()=>{
             console.log("In useEffect cleanup")
         }
     },)
     return (
         <div>
+            <nav> </nav>
+            <ul id="slide-out" className="sidenav sidenav-fixed">
+                <li><a href="#!">First Sidebar Link</a></li>
+                <li><a href="#!">Second Sidebar Link</a></li>
+            </ul>
+            <a href="#" data-target="slide-out" className="sidenav-trigger"><i className="material-icons">menu</i></a>
+            <a href="#" data-target="slide-out" className="sidenav-trigger"><i className="material-icons">menu</i></a>
             <canvas id="canvas_editor" width="800" height="600"></canvas>
             <div>
-                <button onClick={(e)=>add_square()}>+ Square</button>
+                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_square()}>+ Square</button>
             </div>
             <div>
-                <button onClick={(e)=>add_circle()}>+ Circle</button>
+                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_circle()}>+ Circle</button>
             </div>
             <div>
-                <button onClick={(e)=>add_triagle()}>+ Triangle</button>
+                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_triagle()}>+ Triangle</button>
             </div>
         </div>
     );
