@@ -20,9 +20,24 @@ function EditorComponent(props) {
         fabricEditor.add(circle);
     }
     const add_triagle = ()=>{
-        var triangle = new fabric.Triangle({
+          var triangle = new fabric.Triangle({
             width: 20, height: 30, fill: 'blue', left: 50, top: 50
           });
+          var filter = new fabric.Image.filters.Blur({
+            blur: 0.5
+          });
+          var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
+            var oImg = img.set({ left: 0, top: 0});
+            var filter = new fabric.Image.filters.Blur({
+              blur: 0.5
+            });
+            oImg.filters.push(filter);
+            oImg.applyFilters();
+            fabricEditor.add(oImg);
+          });
+
+          //triangle.filters.push(filter);
+          //triangle.applyFilters();
           fabricEditor.add(triangle);
     }
     useEffect(()=>{
@@ -37,23 +52,8 @@ function EditorComponent(props) {
     },)
     return (
         <div>
-            <nav> </nav>
-            <ul id="slide-out" className="sidenav sidenav-fixed">
-                <li><a href="#!">First Sidebar Link</a></li>
-                <li><a href="#!">Second Sidebar Link</a></li>
-            </ul>
-            <a href="#" data-target="slide-out" className="sidenav-trigger"><i className="material-icons">menu</i></a>
-            <a href="#" data-target="slide-out" className="sidenav-trigger"><i className="material-icons">menu</i></a>
             <canvas id="canvas_editor" width="800" height="600"></canvas>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_square()}>+ Square</button>
-            </div>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_circle()}>+ Circle</button>
-            </div>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_triagle()}>+ Triangle</button>
-            </div>
+            <button onClick={add_triagle}>Add Img</button>
         </div>
     );
 }
