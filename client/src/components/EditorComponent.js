@@ -1,12 +1,15 @@
-import React, {useEffect, useState}from 'react';
+import React, {useEffect, useState,useContext}from 'react';
 import {fabric} from 'fabric'
 import M from 'materialize-css'
 import ImageUploadComponent from './ImageUploadComponent'
+import {GlobalContext} from './StateProvider';
+
+
 let fabricEditor = {}
 function EditorComponent(props) {
-    const default_area = {
-        
-    }
+      
+    const { selectedImage } = useContext(GlobalContext);
+
     let blured_image = undefined
     let blured_clone = undefined
     var filter = new fabric.Image.filters.Blur({
@@ -116,9 +119,10 @@ function EditorComponent(props) {
     },)
     return (
         <div>
+            <img src={selectedImage} />
             <canvas id="canvas_editor" width="800" height="600"></canvas>
             <nav> </nav>
-             
+
             <canvas id="canvas_editor" width="800" height="600"></canvas>
             <div>
                 <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_square()}>+ Square</button>

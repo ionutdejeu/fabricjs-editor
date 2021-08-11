@@ -1,7 +1,9 @@
-import React,{ useEffect, useRef } from 'react';
+import React,{ useEffect,useContext, useRef } from 'react';
+import {GlobalContext} from './StateProvider';
 
 function ImageUploadComponent(props) {
     const loadedImageRef = useRef(null);
+    const { change_loaded_image } = useContext(GlobalContext);
     const file_selection_changed = (ev)=>{
         var f = ev.target.files[0];
         var fr = new FileReader();
@@ -10,6 +12,7 @@ function ImageUploadComponent(props) {
             console.dir(ev2);
             console.log(loadedImageRef)
             loadedImageRef.current.src = ev2.target.result
+            change_loaded_image(ev2.target.result);
         };
         fr.readAsDataURL(f);
     }

@@ -2,7 +2,8 @@ import React, { createContext, useReducer } from 'react';
 import AppReducer from './AppReducer';
 
 const initialState = {
-   shoppingList : []
+   shoppingList : [],
+   selectedImage: undefined
 }
 
 export const GlobalContext = createContext(initialState);
@@ -25,8 +26,18 @@ export const GlobalProvider = ({ children }) => {
        });
    }
 
+   function change_loaded_image(img){
+        dispatch({
+            type: 'CHANGE_IMAGE',
+            payload: img
+        });
+   }
+
    return(
-      <GlobalContext.Provider value = {{shoppingList : state.shoppingList, addItemToList, removeItemFromList}}> 
+      <GlobalContext.Provider value = {{
+        selectedImage : state.selectedImage,  
+        shoppingList : state.shoppingList, 
+      addItemToList, removeItemFromList,change_loaded_image}}> 
         {children} 
    </GlobalContext.Provider>
    )

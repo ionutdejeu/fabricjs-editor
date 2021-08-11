@@ -1,18 +1,16 @@
 import logo from './logo.svg';
 import './App.css';
 import EditorComponent from './components/EditorComponent';
-import {InputComponent} from './components/InputComponent';
-import RefComponent from './components/RefComponent';
-import EffectComponent from './components/EffectComponent';
-import LoadingInputComponent from './components/LoadingInputComponent';
-import ContextComponent from './components/ContextComponent';
- 
+import {GlobalProvider} from './components/StateProvider'
+
 function App() {
   return (
        <div className="App">
-        
-        <EditorComponent/>
-         
+        <GlobalProvider>
+            <div>
+              <EditorComponent/>
+            </div>
+        </GlobalProvider>
       </div>
    );
 }
