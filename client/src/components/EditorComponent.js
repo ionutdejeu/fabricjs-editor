@@ -1,6 +1,7 @@
 import React, {useEffect, useState}from 'react';
 import {fabric} from 'fabric'
 import M from 'materialize-css'
+import ImageUploadComponent from './ImageUploadComponent'
 let fabricEditor = {}
 function EditorComponent(props) {
     const default_area = {
@@ -129,6 +130,7 @@ function EditorComponent(props) {
                 <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_triagle()}>+ Triangle</button>
             </div>
             <button onClick={add_triagle}>Add Img</button>
+            <ImageUploadComponent></ImageUploadComponent>
         </div>
     );
 }
