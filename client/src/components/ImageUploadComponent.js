@@ -1,5 +1,6 @@
 import React,{ useEffect,useContext, useRef } from 'react';
 import {GlobalContext} from './StateProvider';
+import {store} from './AppEventStore'
 
 function ImageUploadComponent(props) {
     const loadedImageRef = useRef(null);
@@ -13,6 +14,7 @@ function ImageUploadComponent(props) {
             console.log(loadedImageRef)
             loadedImageRef.current.src = ev2.target.result
             change_loaded_image(ev2.target.result);
+            store.emit('image_changed',ev2.target.result)
         };
         fr.readAsDataURL(f);
     }

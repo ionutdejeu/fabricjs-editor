@@ -3,7 +3,7 @@ import {fabric} from 'fabric'
 import M from 'materialize-css'
 import ImageUploadComponent from './ImageUploadComponent'
 import {GlobalContext} from './StateProvider';
-
+import {store} from './AppEventStore'
 
 let fabricEditor = {}
 function EditorComponent(props) {
@@ -99,6 +99,9 @@ function EditorComponent(props) {
         var elems = document.querySelectorAll('.sidenav');
         const options = {}
         var instances = M.Sidenav.init(elems, options);
+        store.subscribe('image_changed',(data)=>{
+            console.log('image_changed',data)
+        })
         var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
             var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
             //var filter = new fabric.Image.filters.Blur({
@@ -116,7 +119,10 @@ function EditorComponent(props) {
         return ()=>{
             console.log("In useEffect cleanup")
         }
-    },)
+    })
+    useEffect(()=>{
+        console.log('Selected item changed in editor')
+    },[selectedImage])
     return (
         <div>
             <img src={selectedImage} />
