@@ -1,6 +1,5 @@
-import React, {useEffect, useState,useContext}from 'react';
+import React, {useEffect,useContext}from 'react';
 import {fabric} from 'fabric'
-import M from 'materialize-css'
 import ImageUploadComponent from './ImageUploadComponent'
 import {GlobalContext} from './StateProvider';
 import {store} from './AppEventStore'
@@ -12,6 +11,8 @@ function EditorComponent(props) {
     let original_image = undefined
     let blured_image = undefined
     let blured_clone = undefined
+    let mouseDown = false
+    let newlyDrawnRectangle, origX, origY
     var filter = new fabric.Image.filters.Blur({
         blur: 0.2
     });
@@ -19,21 +20,20 @@ function EditorComponent(props) {
     const update_scale_pos = (blured_clone,options)=>{
         blured_clone.cropX = options.transform.target.left
         blured_clone.cropY =  options.transform.target.top
-        console.log({"x":blured_clone.cropX,"y":blured_clone.cropY});
         blured_clone.width *= blured_clone.scaleX;
         blured_clone.height*=  blured_clone.scaleY;
         blured_clone.scaleX = 1
         blured_clone.scaleY = 1
     }
     const blureSection = (left=0, top=0, img=null)=>{
-        if(blured_image!== undefined)
+        if(original_image !== undefined)
         {
-            original_image.remove()
-            blured_clone.remove();
-            blured_image.remove();
-            blured_image = undefined;
+            fabricEditor.remove(original_image)
+            fabricEditor.remove(blured_image)
+            fabricEditor.remove(blured_clone)
         }
-        original_image = img
+        
+        original_image = img 
         fabricEditor.add(original_image)
         blured_image = fabric.util.object.clone(img);
         blured_image.set({opacity:1,selectable: true});
@@ -63,63 +63,64 @@ function EditorComponent(props) {
             update_scale_pos(blured_clone,options)
         })
     }
-    const add_square = ()=>{
-        var rect = new fabric.Rect({
-          left: 100,
-          top: 100,
-          fill: 'red',
-          width: 20,
-          height: 20
-        });
-        fabricEditor.add(rect);        
-    }
-    const add_circle = ()=>{
-        var circle = new fabric.Circle({
-            radius: 20, fill: 'green', left: 100, top: 100
+    const resizeCanvas = ()=>{        
+        fabricEditor.setDimensions({
+            width: window.innerWidth,
+            height: window.innerHeight
           });
-        fabricEditor.add(circle);
-    }
-    const add_triagle = ()=>{
-          var triangle = new fabric.Triangle({
-            width: 20, height: 30, fill: 'blue', left: 50, top: 50
-          });
-          
-          var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
-            var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: false});
-            //var filter = new fabric.Image.filters.Blur({
-            //  blur: 0.5
-            //});
-            //oImg.filters.push(filter);
-            //oImg.applyFilters();
-            oImg.set({opacity:1});
-            fabricEditor.add(oImg);
-            blureSection(0,0,oImg);
-          }, {
-            crossOrigin: 'anonymous'
-          });
-
-          //triangle.filters.push(filter);
-          //triangle.applyFilters();
-          fabricEditor.add(triangle);
+        fabricEditor.renderAll();
     }
     useEffect(()=>{
         fabricEditor = new fabric.Canvas('canvas_editor');
-        console.log(fabricEditor)
-        var elems = document.querySelectorAll('.sidenav');
-        const options = {}
-        var instances = M.Sidenav.init(elems, options);
+        fabricEditor.setDimensions({
+            width: window.innerWidth,
+            height: window.innerHeight
+          });
+         
+        fabricEditor.on('mouse:wheel', function(opt) {
+        
+            var delta = opt.e.deltaY;
+            var zoom = fabricEditor.getZoom();
+            zoom *= 0.999 ** delta;
+            if (zoom > 20) zoom = 20;
+            if (zoom < 0.01) zoom = 0.01;
+            fabricEditor.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
+            var vpt = this.viewportTransform;
+            if (zoom < 400 / 1000) {
+                vpt[4] = 200 - 1000 * zoom / 2;
+                vpt[5] = 200 - 1000 * zoom / 2;
+              } else {
+                if (vpt[4] >= 0) {
+                  vpt[4] = 0;
+                } else if (vpt[4] < fabricEditor.getWidth() - 1000 * zoom) {
+                  vpt[4] = fabricEditor.getWidth() - 1000 * zoom;
+                }
+                if (vpt[5] >= 0) {
+                  vpt[5] = 0;
+                } else if (vpt[5] < fabricEditor.getHeight() - 1000 * zoom) {
+                  vpt[5] = fabricEditor.getHeight() - 1000 * zoom;
+                }
+            }
+        });
         store.subscribe('image_changed',(data)=>{
             console.log('image_changed',data)
-            var imga = fabric.Image.fromURL(data, function(img) {
+            fabric.Image.fromURL(data, function(img) {
                 var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
                 blureSection(0,0,oImg)       
             });
         })
-        var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
-            var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
-            oImg.set({opacity:1});
+        window.addEventListener('resize', resizeCanvas, false);
+        fabricEditor.on("mouse:down",function(e){
+            mouseDown = true
+            var pointer = fabricEditor.getPointer(e.e)
+            origX = pointer.x
+            origY = pointer.y
 
-            //fabricEditor.add(oImg);
+        })
+        fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
+            var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
             blureSection(0,0,oImg)
         }, {
             crossOrigin: 'anonymous'
@@ -127,16 +128,14 @@ function EditorComponent(props) {
         return ()=>{
             console.log("In useEffect cleanup")
         }
-    })
+    },[])
     useEffect(()=>{
         console.log('Selected item changed in editor')
     },[selectedImage])
     return (
-        <div>
-            <img src={selectedImage} />
-            <canvas id="canvas_editor" width="800" height="600"></canvas>
-            <button onClick={add_triagle}>Add Img</button>
+        <div className="canvas_wrapper">
             <ImageUploadComponent></ImageUploadComponent>
+            <canvas id="canvas_editor"></canvas>
         </div>
     );
 }
