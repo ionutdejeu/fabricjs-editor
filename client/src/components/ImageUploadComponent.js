@@ -14,8 +14,8 @@ function ImageUploadComponent(props) {
         fr.readAsDataURL(f);
     }
     return (
-        <div class="upload-btn-wrapper">
-            <button class="btn">Upload a file</button>
+        <div className="upload-btn-wrapper">
+            <button className="btn">Upload a file</button>
             <input type="file" onChange = {file_selection_changed}/>
         </div>
     );
