@@ -9,7 +9,7 @@ let fabricEditor = {}
 function EditorComponent(props) {
       
     const { selectedImage } = useContext(GlobalContext);
-
+    let original_image = undefined
     let blured_image = undefined
     let blured_clone = undefined
     var filter = new fabric.Image.filters.Blur({
@@ -26,6 +26,15 @@ function EditorComponent(props) {
         blured_clone.scaleY = 1
     }
     const blureSection = (left=0, top=0, img=null)=>{
+        if(blured_image!== undefined)
+        {
+            original_image.remove()
+            blured_clone.remove();
+            blured_image.remove();
+            blured_image = undefined;
+        }
+        original_image = img
+        fabricEditor.add(original_image)
         blured_image = fabric.util.object.clone(img);
         blured_image.set({opacity:1,selectable: true});
         blured_image.filters.push(filter);
@@ -76,7 +85,7 @@ function EditorComponent(props) {
           });
           
           var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
-            var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: false,});
+            var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: false});
             //var filter = new fabric.Image.filters.Blur({
             //  blur: 0.5
             //});
@@ -101,17 +110,16 @@ function EditorComponent(props) {
         var instances = M.Sidenav.init(elems, options);
         store.subscribe('image_changed',(data)=>{
             console.log('image_changed',data)
+            var imga = fabric.Image.fromURL(data, function(img) {
+                var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
+                blureSection(0,0,oImg)       
+            });
         })
         var image = fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
             var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
-            //var filter = new fabric.Image.filters.Blur({
-            //  blur: 0.5
-            //});
-            //oImg.filters.push(filter);
-            //oImg.applyFilters();
             oImg.set({opacity:1});
 
-            fabricEditor.add(oImg);
+            //fabricEditor.add(oImg);
             blureSection(0,0,oImg)
         }, {
             crossOrigin: 'anonymous'
@@ -127,18 +135,6 @@ function EditorComponent(props) {
         <div>
             <img src={selectedImage} />
             <canvas id="canvas_editor" width="800" height="600"></canvas>
-            <nav> </nav>
-
-            <canvas id="canvas_editor" width="800" height="600"></canvas>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_square()}>+ Square</button>
-            </div>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_circle()}>+ Circle</button>
-            </div>
-            <div>
-                <button className="btn waves-effect white grey-text darken-text-2" onClick={(e)=>add_triagle()}>+ Triangle</button>
-            </div>
             <button onClick={add_triagle}>Add Img</button>
             <ImageUploadComponent></ImageUploadComponent>
         </div>
