@@ -2,7 +2,6 @@ import React, {useEffect,useContext}from 'react';
 import {fabric} from 'fabric'
 import ImageUploadComponent from './ImageUploadComponent'
 import DownloadImageComponent from './DownloadImageComponent'
-import {GlobalContext} from './StateProvider';
 import {store} from './AppEventStore'
 
 let fabricEditor = {}
@@ -14,16 +13,6 @@ let newlyDrawnRectangle, origX, origY,webGLBackend = undefined
 var filter = new fabric.Image.filters.Blur({
     blur: 0.3
 });
-
-function dataURLtoFile(dataurl, filename) {
- 
-    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, {type:mime});
-}
 
 
 function dowload_image(){
@@ -222,7 +211,7 @@ function EditorComponent(props) {
                 newlyDrawnRectangle = undefined;
             }
         });
-        fabric.Image.fromURL("https://upload.wikimedia.org/wikipedia/commons/4/4e/Pleiades_large.jpg", function (img) {
+        fabric.Image.fromURL("./background_image.png", function (img) {
             var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: false});
             blureSection(0,0,oImg)
         }, {
@@ -235,9 +224,13 @@ function EditorComponent(props) {
     
     return (
         <div className="canvas_wrapper">
-            <ImageUploadComponent></ImageUploadComponent>
-            <DownloadImageComponent></DownloadImageComponent>
+            <div className="toolbar" >
+                <ImageUploadComponent></ImageUploadComponent>
+                <DownloadImageComponent></DownloadImageComponent>
+            </div>
+            <div className="canvas_editor_wrapper">
             <canvas id="canvas_editor"></canvas>
+            </div>
         </div>
     );
 }

@@ -15,7 +15,7 @@ function ImageUploadComponent(props) {
     }
     return (
         <div className="upload-btn-wrapper">
-            <button className="btn">Upload a file</button>
+            <button className="btn">Incarca imagine</button>
             <input type="file" onChange = {file_selection_changed}/>
         </div>
     );

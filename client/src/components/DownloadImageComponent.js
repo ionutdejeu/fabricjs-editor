@@ -8,7 +8,7 @@ function DownloadImageComponent(props) {
     }
     return (
         <div className="download-btn-wrapper">
-            <button onClick={download_image}>Download Image</button>
+            <button className="btn" onClick={download_image}>Descarca imagine</button>
         </div>
     );
 }
