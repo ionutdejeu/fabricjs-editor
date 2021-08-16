@@ -1,184 +1,158 @@
 import React, {useEffect,useContext}from 'react';
 import {fabric} from 'fabric'
 import ImageUploadComponent from './ImageUploadComponent'
+import DownloadImageComponent from './DownloadImageComponent'
 import {GlobalContext} from './StateProvider';
 import {store} from './AppEventStore'
 
 let fabricEditor = {}
+let original_image = undefined
+let blured_image = undefined
+let blured_sections = []
+let shouldDrawRect = false
+let newlyDrawnRectangle, origX, origY,webGLBackend = undefined
+var filter = new fabric.Image.filters.Blur({
+    blur: 0.3
+});
 
-function center_image(img){
+function dataURLtoFile(dataurl, filename) {
+ 
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {type:mime});
+}
+
+
+function dowload_image(){
+    var img_base64 = fabricEditor.toDataURL({
+        format: "png",
+        quality: 1,
+        top:0,
+        left:0,
+        width: original_image.width * original_image.scaleX * fabricEditor.getZoom(),
+        height: original_image.height * original_image.scaleY  * fabricEditor.getZoom()
+        })
+  
+    var a = document.createElement("a"); //Create <a>
+    a.href = "data:image/png;" + img_base64; //Image Base64 Goes here
+    a.download = "Blurez_image_output.png"; //File name Here
+    a.click(); //Downloaded file
+    //document.removeChild(a);
+    
+}
+function zoom_to_fit_selected_image(img){
+    if(img === undefined){
+        return
+    } 
     let cw = fabricEditor.getWidth()
-    let ch = fabricEditor.getWidth()
-    let wh = window.innerHeight
-    let ww = window.innerWidth
+    let ch = fabricEditor.getHeight()
     let imgw = img.width 
     let imgh = img.height 
-    
-    // fit the image by dimentsions vertical
-    let vertical = imgh > imgw
-    let imgcx = imgh / 2
-    let imgcy = imgw / 2 
+    let zoom = Math.min(ch / imgh, cw / imgw);
 
-    let imgPosY = vertical ? imgcx: imgcy;
-    let imgPosX = vertical ? imgcy: imgcx;
-    let zoom = vertical? ch / imgh: cw / imgw;
-    animate_zoom(zoom,null,{x:imgPosX,y:imgPosY})
-    let a = {left:0,top:0}
-    console.log(a)
-    img.set({left:0,top:0});
-    console.log(img)
+    set_zoom_of_editor(zoom,null,null)
 
 }
-function animate_zoom(zoom,opt=null,offset=null){
-    console.log(zoom,opt);
-    //fabricEditor.setZoom(zoom);
+
+
+function add_blured_selection(x,y,w,h){
+    
+    console.log(x,y,w,h)
+    let blured_clone = fabric.util.object.clone(blured_image);
+    blured_clone.cropX = x;
+    blured_clone.cropY = y;
+    blured_clone.width = w; // Default
+    blured_clone.height = h; // Default
+    blured_clone.objectCaching = false;
+    fabricEditor.add(blured_clone);
+    blured_clone.bringToFront();
+    blured_clone.set({top:y,left:x, visible:true,selectable:true});
+    blured_clone.on('moving', function (options) {
+        update_scale_pos(blured_clone,options)
+    });
+    
+    blured_clone.on('scaling', function (options) {
+        update_scale_pos(blured_clone,options)
+    })
+    blured_sections.push(blured_clone);
+
+}
+function check_mouse_within_image_rect(imgW,imgH,pointer){
+    return pointer.x <= imgW && pointer.y <=imgH;
+}
+const update_scale_pos = (blured_clone,options)=>{
+    blured_clone.cropX = options.transform.target.left
+    blured_clone.cropY =  options.transform.target.top
+    blured_clone.width *= blured_clone.scaleX;
+    blured_clone.height*=  blured_clone.scaleY;
+    blured_clone.scaleX = 1
+    blured_clone.scaleY = 1
+}
+
+
+function set_zoom_of_editor(zoom,opt=null,offset=null){
+     
     if(opt !== null){
         opt.e.preventDefault();
         opt.e.stopPropagation();
-        fabricEditor.setZoom(zoom);
-        //fabricEditor.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+        fabricEditor.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
     }
     else {
-        fabricEditor.zoomToPoint({ x: offset.x, y: offset.y }, zoom);
+        fabricEditor.setZoom(zoom);
     }
     fabricEditor.renderAll();
-
-    //fabric.util.animate({
-    //    startValue: fabricEditor.getZoom(),
-    //    endValue: zoom,
-    //    duration: 500,
-    //    onChange: function(zoomvalue) {
-    //        if(opt !== null){
-    //            opt.e.preventDefault();
-    //            opt.e.stopPropagation();
-    //            fabricEditor.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoomvalue);
-    //        }
-    //        else {
-    //            fabricEditor.zoomToPoint({ x: offset.x, y: offset.y }, zoomvalue);
-    //        }
-    //        fabricEditor.renderAll();
-    //    },
-    //    onComplete: function() {
-    //        if(opt !== null){
-    //            opt.e.preventDefault();
-    //            opt.e.stopPropagation();
-    //        }
-    //        fabricEditor.renderAll();
-    //    }
-    //  });
 }
-function zoom_editor(){
-    let initialZoom = fabricEditor.getZoom()
 
+const blureSection = (left=0, top=0, img=null)=>{
+    if(original_image !== undefined)
+    {
+        fabricEditor.remove(original_image)
+        fabricEditor.remove(blured_image)
+    }
+    
+    original_image = img 
+    fabricEditor.add(original_image)
+    
+    zoom_to_fit_selected_image(img)
+    original_image.set({selectable: false,hoverCursor: "arrow"});
+    
+    blured_image = fabric.util.object.clone(img);
+    blured_image.set({opacity:1,selectable: false});
+    blured_image.filters.push(filter);
+    blured_image.applyFilters();
+    fabricEditor.add(blured_image);
+    blured_image.bringToFront();
+    blured_image.set({visible:false,selectable:false});
+    
 }
 
 function EditorComponent(props) {
       
-    const { selectedImage } = useContext(GlobalContext);
-    let original_image = undefined
-    let blured_image = undefined
-    let blured_clone = undefined
-    let shouldDrawRect = false
-    let newlyDrawnRectangle, origX, origY
-    var filter = new fabric.Image.filters.Blur({
-        blur: 0.2
-    });
+   
 
-    const update_scale_pos = (blured_clone,options)=>{
-        blured_clone.cropX = options.transform.target.left
-        blured_clone.cropY =  options.transform.target.top
-        blured_clone.width *= blured_clone.scaleX;
-        blured_clone.height*=  blured_clone.scaleY;
-        blured_clone.scaleX = 1
-        blured_clone.scaleY = 1
-    }
-    const blureSection = (left=0, top=0, img=null)=>{
-        if(original_image !== undefined)
-        {
-            fabricEditor.remove(original_image)
-            fabricEditor.remove(blured_image)
-            fabricEditor.remove(blured_clone)
-        }
-        console.log(img)
-        
-        original_image = img 
-        fabricEditor.add(original_image)
-        center_image(img)
-        original_image.set({selectable: false});
-        
-        blured_image = fabric.util.object.clone(img);
-        blured_image.set({opacity:1,selectable: false});
-        blured_image.filters.push(filter);
-        blured_image.applyFilters();
-        fabricEditor.add(blured_image);
-        blured_image.sendToBack();
-        blured_image.set({visible:false});
-        
-        
-        blured_clone = fabric.util.object.clone(blured_image);
-        blured_clone.cropX = 0;
-        blured_clone.cropY = 0;
-        blured_clone.width = 300; // Default
-        blured_clone.height = 150; // Default
-        blured_clone.objectCaching = false;
-        fabricEditor.add(blured_clone);
-        blured_clone.bringToFront();
-        blured_clone.set({visible:true,selectable:true});
-
-
-        blured_clone.on('moving', function (options) {
-            update_scale_pos(blured_clone,options)
-        });
-        
-        blured_clone.on('scaling', function (options) {
-            update_scale_pos(blured_clone,options)
-        })
-    }
+   
     const resizeCanvas = ()=>{        
         fabricEditor.setDimensions({
             width: window.innerWidth,
             height: window.innerHeight
-          });
+        });
+        console.log(fabricEditor.getZoom())
+        zoom_to_fit_selected_image(original_image)
         fabricEditor.renderAll();
     }
     useEffect(()=>{
         fabricEditor = new fabric.Canvas('canvas_editor');
-        fabricEditor.setDimensions({
-            width: window.innerWidth,
-            height: window.innerHeight
-          });
-         
-        fabricEditor.on('mouse:wheel', function(opt) {
-
-            var delta = opt.e.deltaY;
-            var zoom = fabricEditor.getZoom();
-            zoom *= 0.999 ** delta;
-            if (zoom > 20) zoom = 20;
-            if (zoom < 0.01) zoom = 0.01;
-            
-            
-            var vpt = this.viewportTransform;
-            if (zoom < 400 / 1000) {
-                vpt[4] = 200 - 1000 * zoom / 2;
-                vpt[5] = 200 - 1000 * zoom / 2;
-              } else {
-                if (vpt[4] >= 0) {
-                  vpt[4] = 0;
-                } else if (vpt[4] < fabricEditor.getWidth() - 1000 * zoom) {
-                  vpt[4] = fabricEditor.getWidth() - 1000 * zoom;
-                }
-                if (vpt[5] >= 0) {
-                  vpt[5] = 0;
-                } else if (vpt[5] < fabricEditor.getHeight() - 1000 * zoom) {
-                  vpt[5] = fabricEditor.getHeight() - 1000 * zoom;
-                }
-            }
-            
-            animate_zoom(zoom,opt)
-            
-        });
+        //fabric.filterBackend = new fabric.WebglFilterBackend()
+        fabric.textureSize = 6552236;
+        resizeCanvas()
+        
+        store.subscribe('download_image',(data)=>{
+            dowload_image();
+        })
         store.subscribe('image_changed',(data)=>{
-            console.log('image_changed',data)
             fabric.Image.fromURL(data, function(img) {
                 var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: true});
                 blureSection(0,0,oImg)       
@@ -187,9 +161,14 @@ function EditorComponent(props) {
         window.addEventListener('resize', resizeCanvas, false);
         fabricEditor.on("mouse:down",function(e){
             
-            console.log(e);
-            shouldDrawRect = true
+            let no_selected_obj =  fabricEditor.getActiveObjects().length == 0;
             var pointer = fabricEditor.getPointer(e.e)
+            let within_rect = check_mouse_within_image_rect(original_image.width,
+                original_image.height,
+                pointer)
+            shouldDrawRect = no_selected_obj && within_rect
+            
+            if(!shouldDrawRect) return
             origX = pointer.x
             origY = pointer.y
             var pointer = fabricEditor.getPointer(e.e);
@@ -211,32 +190,39 @@ function EditorComponent(props) {
             if (!shouldDrawRect) return;
             var pointer = fabricEditor.getPointer(o.e);
             
+            // need to clamp the size of the border to the withd of the intial loaded image 
+            let imgw = original_image.width;
+            let imgh = original_image.height;
+            let mX = Math.min(pointer.x,imgw)
+            let mY = Math.min(pointer.y,imgh)
+
             if(origX>pointer.x){
-                newlyDrawnRectangle.set({ left: Math.abs(pointer.x) });
+                newlyDrawnRectangle.set({ left: Math.max(0,mX) });
             }
             if(origY>pointer.y){
-                newlyDrawnRectangle.set({ top: Math.abs(pointer.y) });
+                newlyDrawnRectangle.set({ top: Math.max(0,mY) });
             }
             
-            newlyDrawnRectangle.set({ width: Math.abs(origX - pointer.x) });
-            newlyDrawnRectangle.set({ height: Math.abs(origY - pointer.y) });
+            newlyDrawnRectangle.set({ width: Math.abs(origX - mX) });
+            newlyDrawnRectangle.set({ height: Math.abs(origY - mY) });
             
             
             fabricEditor.renderAll();
         })
-        fabricEditor.on('object:selected', function(o){
-            console.log(o)
-        });
-        fabricEditor.on("selection:created", function(obj){
-            console.log(obj)
-        });
-        fabricEditor.on("selection:updated", function(obj){
-            console.log(obj)
-        });
+         
         fabricEditor.on('mouse:up', function(o){
-            shouldDrawRect = false;
-          });
-        fabric.Image.fromURL("https://i.imgur.com/pZnE4mU.jpg", function (img) {
+            
+            if(newlyDrawnRectangle !== undefined && shouldDrawRect==true){ 
+                add_blured_selection(newlyDrawnRectangle.left,newlyDrawnRectangle.top,
+                    newlyDrawnRectangle.width,
+                    newlyDrawnRectangle.height)
+                    
+                fabricEditor.remove(newlyDrawnRectangle)
+                shouldDrawRect = false;
+                newlyDrawnRectangle = undefined;
+            }
+        });
+        fabric.Image.fromURL("https://upload.wikimedia.org/wikipedia/commons/4/4e/Pleiades_large.jpg", function (img) {
             var oImg = img.set({ left: 0, top: 0,opacity: 1, selectable: false});
             blureSection(0,0,oImg)
         }, {
@@ -246,12 +232,11 @@ function EditorComponent(props) {
             console.log("In useEffect cleanup")
         }
     },[])
-    useEffect(()=>{
-        console.log('Selected item changed in editor')
-    },[selectedImage])
+    
     return (
         <div className="canvas_wrapper">
             <ImageUploadComponent></ImageUploadComponent>
+            <DownloadImageComponent></DownloadImageComponent>
             <canvas id="canvas_editor"></canvas>
         </div>
     );
